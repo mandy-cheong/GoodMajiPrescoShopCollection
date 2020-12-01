@@ -16,7 +16,10 @@ using System.Web;
 /// </summary>
 public class PrescoService
 {
-    private readonly string _url = "https://cbec-test.sp88.tw";
+    //測試
+    public string _url = "https://cbec-test.sp88.tw";
+    //正式
+    //public string _url = "https://cbec.sp88.tw";
     private readonly APIHelper _apiHelper;
 
     
@@ -28,7 +31,7 @@ public class PrescoService
         _apiHelper = new APIHelper();
     }
 
-   
+
     public RVal CreateOrder(List<OrderRequest> requests)
     {
         CheckRemainingShipNumber();
@@ -37,26 +40,39 @@ public class PrescoService
         for (int i = 0; i < requests.Count; i++)
             requests[i].ShipNo = shipnumner[i].Number;
 
-        
-            var rval = SubmitOrder(requests); ;
-            if (rval.RStatus)
-                UpdateShipNumber(shipnumner);
 
-            return rval;
+        var rval = SubmitOrder(requests); ;
+        if (rval.RStatus)
+            UpdateShipNumber(shipnumner);
+
+        return rval;
     }
-   
+
     private RVal RequestShipNumber(ShipNumberRequest request)
     {
         var url = _url + "/api/shipment/numbers?CountryId=" + request.CountryId + "&ShipCount=" + request.ShipCount;
         var data = JsonConvert.SerializeObject(request);
         var helper = new APIHelper { Url = url, RequestData = data };
-        var rval= helper.GETApi();
+        var rval = helper.GETApi();
         if (rval.RStatus)
         {
             rval.DVal = JsonConvert.DeserializeObject<List<string>>(rval.RMsg);
         }
-        AddLog(url, data, helper.ResponseData);
+
+        AddLog(helper);
         return rval;
+    }
+
+    private PrescoAPILog MapAPILog(APIHelper helper)
+    {
+        return new PrescoAPILog
+        {
+            SysId = Guid.NewGuid(),
+            CDate = DateTime.Now,
+            URL = helper.Url,
+            RequestData = helper.RequestData,
+            ResponseData = helper.ResponseData
+        };
     }
 
     private RVal SubmitOrder(List<OrderRequest> request)
@@ -66,23 +82,47 @@ public class PrescoService
         var data = JsonConvert.SerializeObject(request);
         var helper = new APIHelper { Url = url, RequestData = data, ContentType = "application/json" };
 
-        var rval =      helper.PostApi();
-
+        var rval = helper.PostApi();
         if (rval.RStatus == false)
             rval.RMsg = JsonConvert.DeserializeObject<PrescoResponse>(rval.RMsg).Message;
+        else
+            AddOrderLog(request, helper);
 
         return rval;
     }
-   
+
+    private int AddOrderLog(List<OrderRequest> request, APIHelper aPIHelper)
+    {
+        var cmdList = new List<SqlCommand>();
+        var prescoAPILog = MapAPILog(aPIHelper);
+        foreach (var item in request)
+        {
+            var orderlog = new PrescoOrderLog();
+            orderlog.SysId = Guid.NewGuid();
+            orderlog.PrescoAPILogID = prescoAPILog.SysId;
+            orderlog.PrescoShipID = item.ShipNo;
+            orderlog.GMShipID = item.OrderNo;
+            cmdList.Add(SqlExtension.GetInsertSqlCmd("Prescoorderlog", orderlog));
+        }
+        cmdList.Add(SqlExtension.GetInsertSqlCmd("PrescoAPILog", prescoAPILog));
+        var rval = SqlDbmanager.ExecuteNonQryMutiSqlCmd(cmdList);
+        return rval;
+    }
+
+
+    private bool AddLog(APIHelper helper)
+    {
+        PrescoAPILog prescoAPILog = MapAPILog(helper);
+        var cmd = SqlExtension.GetInsertSqlCmd("PrescoAPILog", prescoAPILog);
+        return SqlHelper.executeNonQry(cmd);
+    }
 
     public void CheckRemainingShipNumber()
     {
-        var shipnumbers = GetShipmentNumbers();
-
-        if (shipnumbers.Rows != null && shipnumbers.Rows.Count <= 10)
+        if (CountShipmentNumber() <= 10)
         {
-            var newNumber = RequestShipNumber(new ShipNumberRequest { ShipCount = 2, CountryId = "HK" }).DVal;
-            var addNumbers = MapShipNumber(newNumber);
+            var requestShipNumber = RequestShipNumber(new ShipNumberRequest { ShipCount = 2, CountryId = "HK" }).DVal;
+            var addNumbers = MapShipNumber(requestShipNumber);
             AddShipNumber(addNumbers);
         }
     }
@@ -104,27 +144,17 @@ public class PrescoService
         {
             shipnumber.Status = (int)ShipNumberStatus.Used;
             shipnumber.UDate = DateTime.Now;
-            cmdlist.Add( SqlExtension.GetUpdateSqlCmd("PrescoShipment", shipnumber, new List<string> { "Id" }, "Id=@Id"));
+            cmdlist.Add(SqlExtension.GetUpdateSqlCmd("PrescoShipment", shipnumber, new List<string> { "Id" }, "Id=@Id"));
         }
         var rval = SqlDbmanager.ExecuteNonQryMutiSqlCmd(cmdlist);
 
         return rval;
     }
 
-    private bool AddLog(string url , string request , string response)
+    private int CountShipmentNumber()
     {
-        var prescoAPILog = new PrescoAPILog { CDate = DateTime.Now, URL = url, RequestData = request, ResponseData = response };
-        var cmd = SqlExtension.GetInsertSqlCmd("PrescoAPILog", prescoAPILog);
-        var rval = SqlHelper.executeNonQry(cmd);
-        return rval;
-    }
-
-    private DataTable GetShipmentNumbers()
-    {
-
-        SqlCommand cmd = new SqlCommand();
-        cmd.CommandText = "SELECT  Number FROM PrescoShipment WHERE Status =1 ORDER BY CDate ";
-        var rval = SqlDbmanager.queryBySql(cmd);
+        var sql = "SELECT  Count(1) FROM PrescoShipment WHERE Status =1  ";
+        var rval = int.Parse(SqlHelper.ExecuteScalarText(sql, null).ToString());
         return rval;
 
     }

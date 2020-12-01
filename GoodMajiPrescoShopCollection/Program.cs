@@ -34,7 +34,7 @@ namespace goodmaji
                     var shopcollectdaily = new ShopCollectDaily();
                     shopcollectdaily.SCD02 = Guid.NewGuid().ToString();
                     shopcollectdaily.SCD03 = DateTime.Now.ToString("yyyy-MM-dd");
-                    shopcollectdaily.SCD04 = item.Name;
+                    shopcollectdaily.SCD04 = item.ShortName;
                     shopcollectdaily.SCD05 = item.PostalCode;
                     shopcollectdaily.SCD06 = item.Address1;
                     shopcollectdaily.SCD07 = item.Address2;
