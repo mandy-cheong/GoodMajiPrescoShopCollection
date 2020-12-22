@@ -17,9 +17,9 @@ using System.Web;
 public class PrescoService
 {
     //測試
-    public string _url = "https://cbec-test.sp88.tw";
+   // public string _url = "https://cbec-test.sp88.tw";
     //正式
-    //public string _url = "https://cbec.sp88.tw";
+    public string _url = "https://cbec.sp88.tw";
     private readonly APIHelper _apiHelper;
 
     
