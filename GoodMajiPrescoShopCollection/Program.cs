@@ -1,6 +1,7 @@
 ﻿using goodmaji;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,12 +19,31 @@ namespace goodmaji
             var shopcollectDaily = MapShopCollectDaily(data.DVal);
             shopcollectDailyFac.insertShopCollectDaily(shopcollectDaily);
 
-            var shopcollectTimeFac = new ShopCollectTimeFac();
-            var shopCollectTime = MapShopCollectTime(data.DVal);
-            shopcollectTimeFac.insertShopCollectTime(shopCollectTime);
+            //var shopcollectTimeFac = new ShopCollectTimeFac();
+            //var shopCollectTime = MapShopCollectTime(data.DVal);
+            //var newShopCollectTimes = GetNewShopCollectTime(shopCollectTime);
+            //shopcollectTimeFac.insertShopCollectTime(newShopCollectTimes);
             Console.WriteLine(data);
         }
 
+        private static bool IsNewShopCollectTime(ShopCollectTime shopCollectTime, DataTable existingShopCollectTime)
+        {
+            return !existingShopCollectTime.AsEnumerable().Any(x => x.Field<string>("SCT02") == shopCollectTime.SCT02
+            &&x.Field<string>("SCT03")==shopCollectTime.SCT03
+            && x.Field<int>("SCT04") == shopCollectTime.SCT04);
+        }
+        private static List<ShopCollectTime> GetNewShopCollectTime(List<ShopCollectTime> shopCollectTimeList)
+        {
+            var newList = new List<ShopCollectTime>();
+            var shopcollectTimeFac = new ShopCollectTimeFac();
+            var existingShopCollectTime = shopcollectTimeFac.getShopCollectTime();
+            foreach (var shopcollectTime in shopCollectTimeList)
+            {
+                if (IsNewShopCollectTime(shopcollectTime, existingShopCollectTime))
+                    newList.Add(shopcollectTime);
+            }
+            return newList;
+        }
         private static List<ShopCollectDaily> MapShopCollectDaily(List<PrescoShopCollect> shopCollectionResponses)
         {
             var result = new List<ShopCollectDaily>();
