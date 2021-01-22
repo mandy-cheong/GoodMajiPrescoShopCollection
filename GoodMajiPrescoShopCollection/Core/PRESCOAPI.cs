@@ -18,9 +18,10 @@ namespace goodmaji
     public class PRESCOAPI
     {
         //測試
-       //public string _url = "https://cbec-test.sp88.tw";
+        // public string _url = "https://test-cbec.sp88.tw";
         //正式
-        public string _url = "https://cbec.sp88.tw";
+        //public string _url = "https://cbec.sp88.tw";
+        public string _url = System.Configuration.ConfigurationManager.AppSettings["prescourl"];
         public PRESCOAPI()
         {
 
@@ -144,9 +145,10 @@ namespace goodmaji
                 parentId = "7M1",
                 eshopId = "000",
                 //測試
-               //password = "wJlxyJEDMWhmyAKASLcp",
+                //password = "wJlxyJEDMWhmyAKASLcp",
                 //正式
-              password = "2ttU8T3Ic6JLkMXxRelX",
+                //password = "2ttU8T3Ic6JLkMXxRelX",
+                password = System.Configuration.ConfigurationManager.AppSettings["prescopass"]
             };
             var accountJSON = JsonConvert.SerializeObject(ac);
             var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);

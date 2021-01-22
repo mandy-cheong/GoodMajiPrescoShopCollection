@@ -17,9 +17,10 @@ using System.Web;
 public class PrescoService
 {
     //測試
-    //public string _url = "https://cbec-test.sp88.tw";
+    // public string _url = "https://test-cbec.sp88.tw";
     //正式
-   public string _url = "https://cbec.sp88.tw";
+    //public string _url = "https://cbec.sp88.tw";
+    public string _url = System.Configuration.ConfigurationManager.AppSettings["prescourl"];
     private readonly APIHelper _apiHelper;
 
     
@@ -114,7 +115,7 @@ public class PrescoService
     {
         PrescoAPILog prescoAPILog = MapAPILog(helper);
         var cmd = SqlExtension.GetInsertSqlCmd("PrescoAPILog", prescoAPILog);
-        return SqlHelper.executeNonQry(cmd);
+        return SqlDbmanager.ExecuteNonQry(cmd);
     }
 
     public void CheckRemainingShipNumber()
@@ -190,14 +191,20 @@ public class PrescoService
     }
     public RVal GetShopCollection(string country)
     {
-        var url = _url + "/api/GetAllCollections?CountryId="+country;
-
-        var helper = new APIHelper { Url = url};
-
-        var rval = helper.GETApi();
-
-        if (rval.RStatus)
-            rval.DVal = JsonConvert.DeserializeObject<List<PrescoShopCollect>>(rval.RMsg);
+        var url = _url + "/api/GetAllCollections?CountryId=" + country;
+        var helper = new APIHelper { Url = url };
+        var rval = new RVal();
+        try
+        {
+            rval = helper.GETApi();
+            AddLog(helper);
+            if (rval.RStatus)
+                rval.DVal = JsonConvert.DeserializeObject<List<PrescoShopCollect>>(rval.RMsg);
+        }
+        catch (Exception ex)
+        {
+            APIHelper.AddLog(rval.RMsg, ex.Message);
+        }
 
         return rval;
     }

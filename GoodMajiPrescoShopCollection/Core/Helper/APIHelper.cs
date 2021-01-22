@@ -123,15 +123,15 @@ public class APIHelper
     {
         using (var streamReader = new StreamReader(response.GetResponseStream()))
         {
-            var result = streamReader.ReadToEnd();
+            ResponseData = streamReader.ReadToEnd();
             switch (response.StatusCode)
             {
                 case HttpStatusCode.OK:
-                    return new RVal { RStatus = true, RMsg = result };
+                    return new RVal { RStatus = true, RMsg = ResponseData };
                 case HttpStatusCode.BadRequest:
-                    return new RVal { RStatus = false, RMsg = result };
+                    return new RVal { RStatus = false, RMsg = ResponseData };
                 default:
-                    return new RVal { RStatus = false, RMsg = result };
+                    return new RVal { RStatus = false, RMsg = ResponseData };
             }
         }
 
@@ -148,6 +148,43 @@ public class APIHelper
                 return new RVal { RStatus = false, RMsg = result };
             default:
                 return new RVal { RStatus = false, RMsg = result };
+        }
+    }
+
+    public static void AddLog(string rmsg, string exStr)
+    {
+        try
+        {
+            StreamWriter sw;
+            DateTime Date = DateTime.Now;
+            var path = System.IO.Path.GetFullPath("log");
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string fileName = DateTime.Now.ToString("yyyyMMdd") + ".txt";
+            var filePath = path + "/" + fileName;
+            FileInfo fi = new FileInfo(filePath);
+
+            if (fi.Exists)
+            {
+                sw = File.AppendText(filePath);
+            }
+            else
+            {
+                File.Create(filePath).Close();
+                sw = File.AppendText(filePath);
+            }
+            sw.WriteLine("*----------------------------------------------------------");
+            sw.WriteLine("err_Time:" + Date.ToString("yyyy-MM-dd HH:mm:ss") + "");
+            sw.WriteLine("err_Msg:" + rmsg + "");
+            sw.WriteLine("err_ExStr:" + exStr);
+            sw.WriteLine("----------------------------------------------------------*");
+            sw.Flush();
+            sw.Close();
+        }
+        finally
+        {
         }
     }
 }
