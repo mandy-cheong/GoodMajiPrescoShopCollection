@@ -19,7 +19,7 @@ public class PrescoService
     //測試
     // public string _url = "https://test-cbec.sp88.tw";
     //正式
-    //public string _url = "https://cbec.sp88.tw";
+    //public string _url = "https://cbec.sp88.tww";
     public string _url = System.Configuration.ConfigurationManager.AppSettings["prescourl"];
     private readonly APIHelper _apiHelper;
 

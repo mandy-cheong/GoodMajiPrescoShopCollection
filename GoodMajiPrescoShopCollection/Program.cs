@@ -1,4 +1,5 @@
 ﻿using goodmaji;
+using GoodMajiPrescoShopCollection.Core.Implement;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,16 +15,43 @@ namespace goodmaji
         {
             var service = new PrescoService();
             var data = service.GetShopCollection("HK");
+            int errrorCount = 0;
+            int maxRetry = 3;
 
-            var shopcollectDailyFac = new ShopCollectDailyFac();
-            var shopcollectDaily = MapShopCollectDaily(data.DVal);
-            shopcollectDailyFac.insertShopCollectDaily(shopcollectDaily);
+            while (!data.RStatus && errrorCount < maxRetry)
+            {
+                errrorCount++;
+                data = service.GetShopCollection("HK");
+            }
+
+            bool notifyEmail = errrorCount == maxRetry;
+         
+            try
+            {
+
+                var shopcollectDailyFac = new ShopCollectDailyFac();
+                var shopcollectDaily = MapShopCollectDaily(data.DVal);
+                shopcollectDailyFac.insertShopCollectDaily(shopcollectDaily);
+            }
+            catch (Exception ex)
+            {
+                notifyEmail = true;
+                data.RMsg = ex.Message;
+            }
+
+            if (notifyEmail)
+            {
+                var emailService = new EmailService();
+                emailService.SendEmailAysnc("mandycheong@hawooo.com", "there is an error while sending api to presco shop collect  , error message :" + data.RMsg, "Presco Shop Collect Error");
+                return;
+            }
 
             //var shopcollectTimeFac = new ShopCollectTimeFac();
             //var shopCollectTime = MapShopCollectTime(data.DVal);
             //var newShopCollectTimes = GetNewShopCollectTime(shopCollectTime);
             //shopcollectTimeFac.insertShopCollectTime(newShopCollectTimes);
             Console.WriteLine(data);
+            Console.ReadLine();
         }
 
         private static bool IsNewShopCollectTime(ShopCollectTime shopCollectTime, DataTable existingShopCollectTime)

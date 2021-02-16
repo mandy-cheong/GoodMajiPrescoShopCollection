@@ -662,18 +662,14 @@ namespace goodmaji
         {
             try
             {
-                System.Web.HttpServerUtility Server = System.Web.HttpContext.Current.Server;
-                string fileName = DateTime.Now.ToString("yyyyMMdd") + ".txt";
-                string filePath = Server.MapPath("../log/") + fileName;
-
-
                 DateTime Date = DateTime.Now;
-
-                if (!Directory.Exists(HttpContext.Current.Server.MapPath("../log/")))
+                var path = Path.GetFullPath("log");
+                if (!Directory.Exists(path))
                 {
-                    Directory.CreateDirectory(HttpContext.Current.Server.MapPath("../log/"));
+                    Directory.CreateDirectory(path);
                 }
-
+                var filePath = path + "/" + DateTime.Now.ToString("yyyyMMdd") + ".txt";
+                FileInfo fi = new FileInfo(filePath);
 
                 using (StreamWriter sw = File.AppendText(filePath))
                 {
@@ -705,22 +701,22 @@ namespace goodmaji
             {
                 StreamWriter sw;
                 DateTime Date = DateTime.Now;
-                if (!Directory.Exists(HttpContext.Current.Server.MapPath("../log/")))
+                var path = Path.GetFullPath("log");
+                if (!Directory.Exists(path))
                 {
-                    Directory.CreateDirectory(HttpContext.Current.Server.MapPath("../log/"));
+                    Directory.CreateDirectory(path);
                 }
-                System.Web.HttpServerUtility Server = System.Web.HttpContext.Current.Server;
-                string fileName = DateTime.Now.ToString("yyyyMMdd") + ".txt";
-                FileInfo fi = new FileInfo(Server.MapPath("../log" + "/" + fileName));
+                var filePath = path + "/" + DateTime.Now.ToString("yyyyMMdd") + ".txt";
+                FileInfo fi = new FileInfo(filePath);
 
                 if (fi.Exists)
                 {
-                    sw = File.AppendText(Server.MapPath("../log" + "/" + fileName));
+                    sw = File.AppendText(filePath);
                 }
                 else
                 {
-                    File.Create(Server.MapPath("../log") + "/" + fileName).Close();
-                    sw = File.AppendText(Server.MapPath("../log" + "/" + fileName));
+                    File.Create(filePath).Close();
+                    sw = File.AppendText(filePath);
                 }
                 sw.WriteLine("*----------------------------------------------------------");
                 sw.WriteLine("err_Time:" + Date.ToString("yyyy-MM-dd HH:mm:ss") + "");

@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Helper\APIHelper.cs" />
+    <Compile Include="Core\Implement\EmailService.cs" />
     <Compile Include="Core\Implement\PrescoService.cs" />
     <Compile Include="Core\Model\PrescoResponse.cs" />
     <Compile Include="Core\Model\Presco\Order\OrderRequest.cs" />
