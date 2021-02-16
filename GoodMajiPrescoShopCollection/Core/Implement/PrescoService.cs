@@ -197,7 +197,7 @@ public class PrescoService
         try
         {
             rval = helper.GETApi();
-            AddLog(helper);
+          //  AddLog(helper);
             if (rval.RStatus)
                 rval.DVal = JsonConvert.DeserializeObject<List<PrescoShopCollect>>(rval.RMsg);
         }

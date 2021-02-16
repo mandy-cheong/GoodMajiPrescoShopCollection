@@ -1,11 +1,8 @@
-﻿using goodmaji;
-using GoodMajiPrescoShopCollection.Core.Implement;
+﻿using GoodMajiPrescoShopCollection.Core.Implement;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace goodmaji
 {
@@ -14,6 +11,8 @@ namespace goodmaji
         static void Main(string[] args)
         {
             var service = new PrescoService();
+            var emailService = new EmailService();
+
             var data = service.GetShopCollection("HK");
             int errrorCount = 0;
             int maxRetry = 3;
@@ -24,8 +23,13 @@ namespace goodmaji
                 data = service.GetShopCollection("HK");
             }
 
-            bool notifyEmail = errrorCount == maxRetry;
-         
+            if (errrorCount == maxRetry)
+            {
+                emailService.SendEmailAysnc("mandycheong@hawooo.com", "there is an error while sending api to presco shop collect  , error message :" + data.RMsg, "Presco Shop Collect Error");
+                return;
+            }
+
+
             try
             {
 
@@ -35,29 +39,20 @@ namespace goodmaji
             }
             catch (Exception ex)
             {
-                notifyEmail = true;
-                data.RMsg = ex.Message;
+                var msg = ex.Message + "Stack Trace : " + ex.StackTrace;
+                emailService.SendEmailAysnc("mandycheong@hawooo.com", "there is an error while sending api to presco shop collect  , error message :" + msg, "Presco Shop Collect Error");
             }
 
-            if (notifyEmail)
-            {
-                var emailService = new EmailService();
-                emailService.SendEmailAysnc("mandycheong@hawooo.com", "there is an error while sending api to presco shop collect  , error message :" + data.RMsg, "Presco Shop Collect Error");
-                return;
-            }
 
-            //var shopcollectTimeFac = new ShopCollectTimeFac();
-            //var shopCollectTime = MapShopCollectTime(data.DVal);
-            //var newShopCollectTimes = GetNewShopCollectTime(shopCollectTime);
-            //shopcollectTimeFac.insertShopCollectTime(newShopCollectTimes);
+
             Console.WriteLine(data);
-            Console.ReadLine();
+
         }
 
         private static bool IsNewShopCollectTime(ShopCollectTime shopCollectTime, DataTable existingShopCollectTime)
         {
             return !existingShopCollectTime.AsEnumerable().Any(x => x.Field<string>("SCT02") == shopCollectTime.SCT02
-            &&x.Field<string>("SCT03")==shopCollectTime.SCT03
+            && x.Field<string>("SCT03") == shopCollectTime.SCT03
             && x.Field<int>("SCT04") == shopCollectTime.SCT04);
         }
         private static List<ShopCollectTime> GetNewShopCollectTime(List<ShopCollectTime> shopCollectTimeList)
@@ -111,12 +106,12 @@ namespace goodmaji
                         var shopcollectdaily = new ShopCollectTime();
                         shopcollectdaily.SCT02 = item.Name;
                         shopcollectdaily.SCT03 = item.ShortName;
-                        shopcollectdaily.SCT04 = time.DayofWeek+1;
+                        shopcollectdaily.SCT04 = time.DayofWeek + 1;
                         shopcollectdaily.SCT05 = time.StartTime;
                         shopcollectdaily.SCT06 = time.EndTime;
                         result.Add(shopcollectdaily);
                     }
-                    
+
                 }
             }
             return result;

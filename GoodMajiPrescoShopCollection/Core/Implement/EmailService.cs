@@ -16,7 +16,7 @@ namespace GoodMajiPrescoShopCollection.Core.Implement
             try
             {
                 string fromEmail = "testhawooo@gmail.com";
-                MailMessage message = new MailMessage(recipient, fromEmail, subject, content);
+                MailMessage message = new MailMessage(fromEmail,recipient,  subject, content);
                 SmtpClient client = new SmtpClient("smtp.gmail.com", 587);
                 client.EnableSsl = true;
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
